@@ -8,4 +8,4 @@ CREATE TABLE gift_code
     created_at date,
     updated_at date,
     CONSTRAINT gift_code_pkey PRIMARY KEY (code)
-)
+);

@@ -1,0 +1,707 @@
+{
+	"info": {
+		"_postman_id": "f6c56c14-e08c-496e-8a2a-4a5de5863b63",
+		"name": "Assignment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "5846932"
+	},
+	"item": [
+		{
+			"name": "internal-service",
+			"item": [
+				{
+					"name": "Common Validation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"accountNo\": \"0000000001\",\n    \"transactionAmount\": \"4\",\n    \"transactionCcy\": \"USD\",\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\",\n    \"requestBody\": \"\",\n    \"keyField\": \"\",\n    \"timestamp\": \"\",\n    \"token\": \"{{token}}\",\n    \"option\": {\n        \"valAccountBalance\": true,\n        \"valAccountUnderUsername\": true,\n        \"valPassword\": true,\n        \"valSecurityKey\": false,\n        \"valSession\": false\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/common/validation",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"common",
+								"validation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "exchange-rate",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"accountCcy\": \"KHR\",\n   \"transactionCcy\": \"USD\",\n   \"amount\": 3\n   \n\n }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8081/exchange-rate/convert",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"exchange-rate",
+								"convert"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Account",
+			"item": [
+				{
+					"name": "Account Listing",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var encryption = require('crypto-js');",
+									"",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set(\"timestamp\", timestamp)",
+									"",
+									"let fieldToHash = pm.environment.get(\"secret_key\") + ",
+									"                  Utils.getValueFromBody('username') +",
+									"                  Utils.getValueFromBody('token') +",
+									"                  timestamp;",
+									"",
+									"console.log(\"fieldToHash \" + fieldToHash);",
+									"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+									"pm.environment.set(\"security_key\", hashedValue)",
+									"console.log(\"hashedValue \" + hashedValue);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "timestamp",
+								"value": "{{timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"token\": \"{{token}}\",\n    \"security_key\": \"{{security_key}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8082/account/listing",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"account",
+								"listing"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "timestamp",
+										"value": "{{timestamp}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"{{username}}\",\n    \"token\": \"{{token}}\",\n    \"security_key\": \"{{security_key}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8082/account/listing",
+									"host": [
+										"localhost"
+									],
+									"port": "8082",
+									"path": [
+										"account",
+										"listing"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json;charset=UTF-8"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 30 Mar 2025 04:52:31 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"ok\",\n    \"error_code\": \"\",\n    \"error_message\": \"\",\n    \"data\": [\n        {\n            \"account_no\": \"0000000001\",\n            \"customer_no\": \"000001\",\n            \"currency\": \"KHR\",\n            \"balance\": \"19999352\",\n            \"status\": \"ACTIVE\"\n        },\n        {\n            \"account_no\": \"0000000002\",\n            \"customer_no\": \"000001\",\n            \"currency\": \"USD\",\n            \"balance\": \"123435.0\",\n            \"status\": \"ACTIVE\"\n        }\n    ],\n    \"trace\": {\n        \"trace_id\": \"19e886c5-c3d3-4eaa-89cd-49ef9deff181\",\n        \"created_at\": \"2025-03-30T11:52:31.322811\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Transaction Listing",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var encryption = require('crypto-js');",
+									"",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set(\"timestamp\", timestamp)",
+									"",
+									"let fieldToHash = pm.environment.get(\"secret_key\") + ",
+									"                  Utils.getValueFromBody('username') +",
+									"                  Utils.getValueFromBody('account_no') +",
+									"                  Utils.getValueFromBody('page') +",
+									"                  Utils.getValueFromBody('size') +",
+									"                  Utils.getValueFromBody('token') +",
+									"                  timestamp;",
+									"",
+									"console.log(\"fieldToHash \" + fieldToHash);",
+									"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+									"pm.environment.set(\"security_key\", hashedValue)",
+									"console.log(\"hashedValue \" + hashedValue);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "timestamp",
+								"value": "{{timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"{{username}}\",\n    \"token\": \"{{token}}\",\n    \"account_no\": \"{{account}}\",\n    \"page\": \"3\",\n    \"size\": \"2\",\n    \"security_key\": \"{{security_key}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8082/transaction/listing",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"transaction",
+								"listing"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "timestamp",
+										"value": "{{timestamp}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"{{username}}\",\n    \"token\": \"{{token}}\",\n    \"account_no\": \"{{account}}\",\n    \"page\": \"3\",\n    \"size\": \"2\",\n    \"security_key\": \"{{security_key}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8082/transaction/listing",
+									"host": [
+										"localhost"
+									],
+									"port": "8082",
+									"path": [
+										"transaction",
+										"listing"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "X-XSS-Protection",
+									"value": "0"
+								},
+								{
+									"key": "Cache-Control",
+									"value": "no-cache, no-store, max-age=0, must-revalidate"
+								},
+								{
+									"key": "Pragma",
+									"value": "no-cache"
+								},
+								{
+									"key": "Expires",
+									"value": "0"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json;charset=UTF-8"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Date",
+									"value": "Sun, 30 Mar 2025 05:37:25 GMT"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=60"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"ok\",\n    \"error_code\": \"\",\n    \"error_message\": \"\",\n    \"data\": [\n        {\n            \"transaction_no\": \"5c3c4622-2f1b-418f-8814-dbc3d7f97604\",\n            \"account_no\": \"0000000002\",\n            \"transaction_type\": \"DR\",\n            \"amount\": 1.5,\n            \"ccy\": \"USD\",\n            \"created_at\": \"3/28/25, 12:12\\u202fAM\"\n        },\n        {\n            \"transaction_no\": \"4e36973d-6f8e-48f9-853a-dbc86c578704\",\n            \"account_no\": \"0000000002\",\n            \"transaction_type\": \"DR\",\n            \"amount\": 6,\n            \"ccy\": \"USD\",\n            \"created_at\": \"3/27/25, 11:57\\u202fPM\"\n        }\n    ],\n    \"trace\": {\n        \"trace_id\": \"bc6b1387-bdd8-4390-aa93-d0fcb95c5976\",\n        \"created_at\": \"2025-03-30T12:37:25.591364\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Transaction Download",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var encryption = require('crypto-js');",
+									"",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set(\"timestamp\", timestamp)",
+									"",
+									"let fieldToHash =   pm.environment.get(\"secret_key\") + ",
+									"                    Utils.getValueFromBody('username') +",
+									"                    Utils.getValueFromBody('account_no') +",
+									"                    Utils.getValueFromBody('from_date') +",
+									"                    Utils.getValueFromBody('to_date') +",
+									"                    Utils.getValueFromBody('token') +",
+									"                    timestamp;",
+									"",
+									"console.log(\"fieldToHash \" + fieldToHash);",
+									"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+									"pm.environment.set(\"security_key\", hashedValue)",
+									"console.log(\"hashedValue \" + hashedValue);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "timestamp",
+								"value": "{{timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"account_no\": \"0000000002\",\n  \"from_date\": \"2025-03-28\",\n  \"to_date\": \"2025-03-28\",\n  \"token\": \"{{token}}\",\n  \"security_key\": \"{{security_key}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8082/transaction/download",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"transaction",
+								"download"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transfer",
+			"item": [
+				{
+					"name": "AccountTransfer",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var encryption = require('crypto-js');",
+									"",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set(\"timestamp\", timestamp)",
+									"",
+									"let fieldToHash =   pm.environment.get(\"secret_key\") + ",
+									"                    Utils.getValueFromBody('username') +",
+									"                    Utils.getValueFromBody('password') +",
+									"                    Utils.getValueFromBody('from_account_no') +",
+									"                    Utils.getValueFromBody('to_account_no') +",
+									"                    Utils.getValueFromBody('amount') +",
+									"                    Utils.getValueFromBody('trn_ccy') +",
+									"                    Utils.getValueFromBody('token') +",
+									"                    timestamp;",
+									"",
+									"console.log(\"fieldToHash \" + fieldToHash);",
+									"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+									"pm.environment.set(\"security_key\", hashedValue)",
+									"console.log(\"hashedValue \" + hashedValue);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "timestamp",
+								"value": "{{timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\",\n  \"from_account_no\": \"0000000001\",\n  \"to_account_no\": \"0000000003\",\n  \"amount\": \"12\",\n  \"trn_ccy\": \"USD\",\n  \"token\": \"{{token}}\",\n  \"security_key\": \"{{security_key}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8083/account-transfer",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"account-transfer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redeem Gift",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var encryption = require('crypto-js');",
+									"",
+									"var timestamp = new Date().getTime();",
+									"pm.environment.set(\"timestamp\", timestamp)",
+									"",
+									"let fieldToHash =   pm.environment.get(\"secret_key\") + ",
+									"                    Utils.getValueFromBody('username') +",
+									"                    Utils.getValueFromBody('account_no') +",
+									"                    Utils.getValueFromBody('redeem_code') +",
+									"                    Utils.getValueFromBody('token') +",
+									"                    timestamp;",
+									"",
+									"console.log(\"fieldToHash \" + fieldToHash);",
+									"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+									"pm.environment.set(\"security_key\", hashedValue)",
+									"console.log(\"hashedValue \" + hashedValue);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "timestamp",
+								"value": "{{timestamp}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"account_no\": \"0000000001\",\n  \"redeem_code\": \"098736\",\n  \"token\": \"{{token}}\",\n  \"security_key\": \"{{security_key}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8083/redeem-gift",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"redeem-gift"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var encryption = require('crypto-js');",
+							"",
+							"var timestamp = new Date().getTime();",
+							"pm.environment.set(\"timestamp\", timestamp)",
+							"",
+							"let fieldToHash = pm.environment.get(\"secret_key\") + ",
+							"                  Utils.getValueFromBody('username') +",
+							"                  Utils.getValueFromBody('password') +",
+							"                  timestamp;",
+							"",
+							"console.log(\"fieldToHash \" + fieldToHash);",
+							"let hashedValue = encryption.SHA512(fieldToHash).toString();",
+							"pm.environment.set(\"security_key\", hashedValue)",
+							"console.log(\"hashedValue \" + hashedValue);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"",
+							"if(jsonData.status == 'ok') {",
+							"    pm.environment.set(\"token\", jsonData.data.token);",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "timestamp",
+						"value": "{{timestamp}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\",\n    \"security_key\": \"{{security_key}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/authentication/login",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"authentication",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"Utils = {",
+					"    getValueFromBody(fieldName) {",
+					"",
+					"        var data = pm.request.body;",
+					"        var body = data[data.mode];",
+					"        body = body.replace( /\\\\\"|\"(?:\\\\\"|[^\"])*\"|(\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/)/g, (m, g) => g ? \"\" : m ).trim();",
+					"        var jsonData = JSON.parse(body);",
+					"        var value = jsonData[fieldName]",
+					"        try {",
+					"           ",
+					"            console.log(\"value: \", value)",
+					"            if(value != null && pm.expect(value).to.include(\"{{\")) {",
+					"                var key = value.replace(/[{}]/g,\"\");",
+					"                console.log(\"-------------key:\", key, \"-------------\")",
+					"                value = pm.environment.get(key);",
+					"                console.log(\"environment: \", value)",
+					"                if(value == null || value == undefined) {",
+					"                    console.log(\"collectionVariables: \", pm.collectionVariables.get(key))",
+					"                    return pm.collectionVariables.get(key);",
+					"                } else {",
+					"                    return value;",
+					"                }",
+					"            } else {",
+					"                return value;",
+					"            }",
+					"            ",
+					"        } catch(e) {",
+					"            return value;",
+					"        }",
+					"        ",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

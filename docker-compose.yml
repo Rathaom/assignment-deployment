@@ -1,0 +1,150 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  authentication:
+    build:
+      context: ./authentication
+      dockerfile: Dockerfile
+    container_name: authentication
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      TOKEN_EXPIRATION_IN_SECOND: ${TOKEN_EXPIRATION_IN_SECOND}
+      REQUEST_PAYLOAD_SECURITY_KEY: ${REQUEST_PAYLOAD_SECURITY_KEY}
+      PASSWORD_SECURITY_KEY: ${PASSWORD_SECURITY_KEY}
+      TOKEN_SECURITY_KEY: ${TOKEN_SECURITY_KEY}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_EXCHANGE_RATE_URL: ${MS_EXCHANGE_RATE_URL}
+    depends_on:
+      - db
+
+  exchange-rate:
+    build:
+      context: ./exchange_rate
+      dockerfile: Dockerfile
+    container_name: exchange-rate
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - db
+      - authentication
+
+  account:
+    build:
+      context: ./account
+      dockerfile: Dockerfile
+    container_name: account
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_COMMON_VALIDATION_URL: ${MS_COMMON_VALIDATION_URL}
+    depends_on:
+      - db
+      - exchange-rate
+
+  fund-transfer:
+    build:
+      context: ./fund-transfer
+      dockerfile: Dockerfile
+    container_name: fund-transfer
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_EXCHANGE_RATE_URL: ${MS_EXCHANGE_RATE_URL}
+      MS_COMMON_VALIDATION_URL: ${MS_COMMON_VALIDATION_URL}
+    depends_on:
+      - db
+      - account
+
+  kafka:
+    image: bitnami/kafka:3.9.0
+    container_name: kafka
+    restart: always
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+  centralization-logs-microservice:
+    build:
+      context: ./centralization-logs-microservice
+      dockerfile: Dockerfile
+    container_name: centralization-logs-microservice
+    ports:
+      - "8084:8084"
+    environment:
+
+      KAFKA_HOST: kafka:9092
+      KAFKA_GROUP_ID: centralization_logs
+      KAFKA_TOPIC_ODD_DAY: Odd-Day-Distributed-Message
+      KAFKA_TOPIC_EVEN_DAY: Even-Day-Distributed-Message
+
+    depends_on:
+      - kafka
+
+  centralization-logs-consumer:
+    build:
+      context: ./centralization-logs-consumer
+      dockerfile: Dockerfile
+    container_name: centralization-logs-consumer
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      
+      KAFKA_HOST: kafka:9092
+      KAFKA_GROUP_ID: centralization_logs
+      KAFKA_TOPIC_ODD_DAY: Odd-Day-Distributed-Message
+      KAFKA_TOPIC_EVEN_DAY: Even-Day-Distributed-Message
+      KAFKA_CONSUMER_MAX_POOL_RECORDS: 15
+
+    depends_on:
+      - db
+      - kafka
+
+volumes:
+  kafka_data:
+    driver: local
+  postgres_data:

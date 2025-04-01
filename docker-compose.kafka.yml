@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.9.0
+    container_name: zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports:
+      - '2181:2181'
+    volumes:
+      - 'zookeeper_data:/bitnami'
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: bitnami/kafka:3.9.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - '9092:9092'
+      - '9093:9093' # Only needed if you enable SSL
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+    volumes:
+      - 'kafka_data:/bitnami'
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  centralization-logs-consumer:
+    depends_on:
+      - kafka
+    build:
+      context: ./centralization-logs-consumer
+      dockerfile: Dockerfile
+    container_name: centralization-logs-consumer
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      
+      KAFKA_HOST: kafka:9092
+      KAFKA_GROUP_ID: centralization_logs
+      KAFKA_TOPIC_ODD_DAY: Odd-Day-Distributed-Message
+      KAFKA_TOPIC_EVEN_DAY: Even-Day-Distributed-Message
+      KAFKA_CONSUMER_MAX_POOL_RECORDS: 15
+
+  centralization-logs-microservice:
+    depends_on:
+      - kafka
+    build:
+      context: ./centralization-logs-microservice
+      dockerfile: Dockerfile
+    container_name: centralization-logs-microservice
+    ports:
+      - "8084:8084"
+    environment:
+
+      KAFKA_HOST: kafka:9092
+      KAFKA_GROUP_ID: centralization_logs
+      KAFKA_TOPIC_ODD_DAY: Odd-Day-Distributed-Message
+      KAFKA_TOPIC_EVEN_DAY: Even-Day-Distributed-Message
+
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local

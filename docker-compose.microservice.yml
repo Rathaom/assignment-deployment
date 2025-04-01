@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  authentication:
+    build:
+      context: ./authentication
+      dockerfile: Dockerfile
+    container_name: authentication
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      TOKEN_EXPIRATION_IN_SECOND: ${TOKEN_EXPIRATION_IN_SECOND}
+      REQUEST_PAYLOAD_SECURITY_KEY: ${REQUEST_PAYLOAD_SECURITY_KEY}
+      PASSWORD_SECURITY_KEY: ${PASSWORD_SECURITY_KEY}
+      TOKEN_SECURITY_KEY: ${TOKEN_SECURITY_KEY}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_EXCHANGE_RATE_URL: ${MS_EXCHANGE_RATE_URL}
+
+  exchange-rate:
+    build:
+      context: ./exchange_rate
+      dockerfile: Dockerfile
+    container_name: exchange-rate
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - authentication
+
+  account:
+    build:
+      context: ./account
+      dockerfile: Dockerfile
+    container_name: account
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_COMMON_VALIDATION_URL: ${MS_COMMON_VALIDATION_URL}
+    depends_on:
+      - exchange-rate
+
+  fund-transfer:
+    build:
+      context: ./fund-transfer
+      dockerfile: Dockerfile
+    container_name: fund-transfer
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      MS_CREATE_LOG_URL: ${MS_CREATE_LOG_URL}
+      MS_EXCHANGE_RATE_URL: ${MS_EXCHANGE_RATE_URL}
+      MS_COMMON_VALIDATION_URL: ${MS_COMMON_VALIDATION_URL}
+    depends_on:
+      - account
+
+volumes:
+  kafka_data:
+    driver: local
+  postgres_data:

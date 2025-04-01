@@ -1,6 +1,6 @@
 CREATE TABLE api_log_odd_day
 (
-    id numeric NOT NULL,
+    id character varying COLLATE pg_catalog."default",
     trace_id character varying COLLATE pg_catalog."default",
     username character varying COLLATE pg_catalog."default",
     error_flag numeric,

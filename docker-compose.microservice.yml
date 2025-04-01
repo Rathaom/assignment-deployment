@@ -70,6 +70,4 @@ services:
       - account
 
 volumes:
-  kafka_data:
-    driver: local
   postgres_data:
